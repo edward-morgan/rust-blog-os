@@ -3,10 +3,11 @@
 #![feature(custom_test_frameworks)] // allow custom test frameworks
 #![test_runner(crate::test_runner)] // specify a test runner
 #![reexport_test_harness_main = "test_main"] 
-#![feature(abi_x86_interrupt)] 
+#![feature(abi_x86_interrupt)] // Allows us to use the unstable x86-interrupt calling convention
 
 use core::panic::PanicInfo;
 
+pub mod gdt; // Task State Segment (Interrupt Stack Table, https://os.phil-opp.com/double-fault-exceptions/#creating-a-tss)
 pub mod serial;
 pub mod vga_buffer;
 pub mod interrupts; 
@@ -15,6 +16,7 @@ pub mod interrupts;
  * General initialization function
  */
 pub fn init() {
+    gdt::init();
     interrupts::init_idt();
 }
 

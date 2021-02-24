@@ -1,6 +1,6 @@
 #![no_std] // Don't use the standard library (Freestanding binary)
 #![no_main] // Disable rust entrypoints
-// As of may, asm is depracated in favor of llvm_asm. rls is not currently working on `nightly` (last working build was 05-15)
+//TODO: As of May 2020, asm is depracated in favor of llvm_asm. rls is not currently working on `nightly` (last working build was 05-15)
 #![feature(asm)] 
 #![feature(custom_test_frameworks)]
 #![test_runner(rust_os::test_runner)]
@@ -23,6 +23,13 @@ pub extern "C" fn _start() -> ! { // Should be divergent
     //     *(0xdeadbeef as *mut u64) = 42;
     // }
 
+    // Kernel stack overflow (pushing return address too many times)
+    // fn stack_overflow() {
+    //    stack_overflow();
+    // }
+    // stack_overflow();
+
+    // Breakpoint fault
     // x86_64::instructions::interrupts::int3();
 
     /* the 'cfg' attribute allows for conditional compilation-a certain function can only be called
@@ -31,7 +38,8 @@ pub extern "C" fn _start() -> ! { // Should be divergent
      */
     #[cfg(test)]
     test_main();
-    
+    println!("Didn't crash after running test_main.");
+
     loop {} // -> !
 }
 
