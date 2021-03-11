@@ -40,7 +40,8 @@ pub extern "C" fn _start() -> ! { // Should be divergent
     test_main();
     println!("Didn't crash after running test_main.");
 
-    loop {} // -> !
+    rust_os::hlt_loop();
+
 }
 
 ////////////////////////////////// Panics ////////////////////////////////// 
@@ -50,7 +51,7 @@ pub extern "C" fn _start() -> ! { // Should be divergent
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! { // Should never return
     println!("{}", _info);
-    loop {}
+    rust_os::hlt_loop();
 }
 // Alternate panic handler for testing (prints to serial, not vga)
 #[cfg(test)]

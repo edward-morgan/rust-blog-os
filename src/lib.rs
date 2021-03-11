@@ -18,6 +18,16 @@ pub mod interrupts;
 pub fn init() {
     gdt::init();
     interrupts::init_idt();
+    // initialize() is unsafe
+    unsafe { interrupts::PICS.lock().initialize() };
+    x86_64::instructions::interrupts::enable();
+}
+
+// Continuously execute `hlt`, which makes the CPU sleep
+pub fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 /* Helper trait that allows us to simplify tests by automatically printing the 
@@ -55,7 +65,7 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
     serial_println!("[failed]\n");
     serial_println!("Error: {}\n", info);
     exit_qemu(QemuExitCode::Failure);
-    loop {}
+    hlt_loop();
 }
 
 // Entrypoint for `cargo xtest`
@@ -64,7 +74,7 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
 pub extern "C" fn _start() -> ! {
     init();
     test_main();
-    loop {}
+    hlt_loop();
 }
 
 #[cfg(test)]

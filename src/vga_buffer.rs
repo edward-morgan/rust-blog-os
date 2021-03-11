@@ -174,5 +174,27 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
   use core::fmt::Write;
-  WRITER.lock().write_fmt(args).unwrap()
+  use x86_64::instructions::interrupts;
+  // Have to disable interrupts when printing; else, deadlock could occur if an interrupt is handled while WRITER is locked.
+  interrupts::without_interrupts (|| {
+    // This is a closure in Rust
+    WRITER.lock().write_fmt(args).unwrap();
+  });
+}
+
+
+#[test_case]
+fn test_println_output() {
+  use core::fmt::Write;
+  use x86_64::instructions::interrupts;
+  let s = "Test string...";
+  interrupts::without_interrupts( || {
+    let mut writer = WRITER.lock();
+    // print a newline so any dots printed by the timer don't mess up testing
+    writeln!(writer, "\n{}", s);
+    for (i, c) in s.chars().enumerate() {
+      let screen_char = writer.buffer.chars[BUFFER_HEIGHT - 2][i].read();
+      assert_eq!(char::from(screen_char.ascii_char), c);
+    }
+  });
 }
