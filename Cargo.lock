@@ -29,6 +29,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "pc-keyboard"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "pic8259_simple"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -42,6 +47,7 @@ version = "0.1.0"
 dependencies = [
  "bootloader 0.9.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pc-keyboard 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "pic8259_simple 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "uart_16550 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -83,6 +89,7 @@ dependencies = [
 "checksum bootloader 0.9.4 (registry+https://github.com/rust-lang/crates.io-index)" = "56452f4da420d25cf4bbf5b8fdc1529a8bde79a081f2619ce7ebc6d581117261"
 "checksum cpuio 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d531514efb06912141fa65967447de805691b685a7565c87d1765afe34a98aa7"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+"checksum pc-keyboard 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "5c6f2d937e3b8d63449b01401e2bae4041bc9dd1129c2e3e0d239407cf6635ac"
 "checksum pic8259_simple 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "af2a5497fb8e59bf8015f67b7dff238d75ef445e03f23edac24ac3a8f09be952"
 "checksum spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 "checksum uart_16550 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)" = "e58fc40dc1712664fc9b0a7bd8ca2f21ab49960924fb245a80a05e1e92f3dfe9"

@@ -31,7 +31,6 @@ use spin; // Mutex
 /* PICs by default send interrupt vectors in the range [0, 15]; However, this conflicts with the CPU exception interrupt
  * numbers 0-31. Because of this, we should start the PIC interrupts at a different range, which in practice defaults to [32, 47].
  */
-
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 
@@ -39,6 +38,7 @@ pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 #[repr(u8)]
 pub enum InterruptIndex {
     Timer = PIC_1_OFFSET,
+    Keyboard = PIC_1_OFFSET + 1,
 }
 impl InterruptIndex {
     // fn as_u8(self) -> u8 {
@@ -69,6 +69,8 @@ lazy_static! {
         }
         // We can do this because InterruptDescriptorTable implements IndexMut (https://doc.rust-lang.org/core/ops/trait.IndexMut.html)
         idt[InterruptIndex::Timer.cast_to_usize()].set_handler_fn(timer_interrupt_handler);
+        idt[InterruptIndex::Keyboard.cast_to_usize()].set_handler_fn(keyboard_interrupt_handler);
+        idt.page_fault.set_handler_fn(page_fault_handler);
         idt
     };
 }
@@ -76,6 +78,10 @@ lazy_static! {
 pub fn init_idt() {
     IDT.load();
 }
+
+// **********************
+// * INTERRUPT HANDLERS *
+// **********************
 
 // https://eli.thegreenplace.net/2011/01/27/how-debuggers-work-part-2-breakpoints
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFrame) {
@@ -92,10 +98,55 @@ extern "x86-interrupt" fn double_fault_handler(stack_frame: &mut InterruptStackF
 extern "x86-interrupt" fn timer_interrupt_handler(stack_frame: &mut InterruptStackFrame) -> () {
     print!(".");
     // notify that we're done processing the timer interrupt
+    // Unsafe because using the wrong interrupt index could delete an interrupt or hang the system
     unsafe { PICS.lock().notify_end_of_interrupt(InterruptIndex::Timer as u8) };
 }
 
-// Tests 
+extern "x86-interrupt" fn keyboard_interrupt_handler(stack_frame: &mut InterruptStackFrame) -> () {
+    use x86_64::instructions::port::Port;
+    use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
+    use spin::Mutex;
+    // Initialize pc_keyboard to handle scancodes
+    lazy_static! {
+        static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =
+            Mutex::new(Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore));
+    }
+    let mut keyboard = KEYBOARD.lock();
+    // 0x60 corresponds to the PS/2 data I/O port
+    let mut port = Port::new(0x60);
+    /* The keyboard sends us a scancode, which represents a key press or depress, according to this table (using the
+     * Scan Code Set 1): https://wiki.osdev.org/Keyboard#Scan_Code_Set_1
+     */
+    let scancode: u8 = unsafe { port.read() };
+    if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+        if let Some(key) = keyboard.process_keyevent(key_event) {
+            match key {
+                DecodedKey::Unicode(c) => print!("{}", c),
+                DecodedKey::RawKey(key) => print!("{:?}", key),
+            }
+        }
+    }
+    unsafe { PICS.lock().notify_end_of_interrupt(InterruptIndex::Keyboard as u8) };
+}
+
+use x86_64::structures::idt::PageFaultErrorCode;
+use crate::hlt_loop;
+
+extern "x86-interrupt" fn page_fault_handler(stack_frame: &mut InterruptStackFrame, error_code: PageFaultErrorCode) {
+    // The cr2 register is populated with the memory address that caused the page fault
+    use x86_64::registers::control::Cr2;
+
+    println!("EXCEPTION: PAGE FAULT");
+    println!("Accessed Address: {:?}", Cr2::read());
+    println!("Error Code: {:?}", error_code);
+    println!("{:#?}", stack_frame);
+    hlt_loop();
+
+}
+
+// *********
+// * TESTS *
+// *********
 #[test_case]
 fn test_breakpoint_exception() {
     x86_64::instructions::interrupts::int3();

@@ -141,6 +141,7 @@ lazy_static! {
   pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
     column_position: 0,
     color_code: ColorCode::new(Color::Yellow, Color::Black),
+    // The bootloader `identity maps` 0xb8000 in physical memory to 0xb8000 in virtual memory here, as paging is enabled
     buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
   });
 }

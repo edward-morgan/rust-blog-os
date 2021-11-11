@@ -16,12 +16,20 @@ use rust_os::println; // our println function defined in lib.rs
 pub extern "C" fn _start() -> ! { // Should be divergent
     println!("Hello World{}", "!");
 
+
+    println!("Currently on Paging Implementation");
+
     rust_os::init();
 
-    // Double fault: Writing outside of memory (page fault) with no page fault handler
+    // Page fault: Writing outside of memory 
     // unsafe {
     //     *(0xdeadbeef as *mut u64) = 42;
     // }
+
+    use x86_64::registers::control::Cr3;
+    let (level_4_page_table, _) = Cr3::read();
+    println!("Level 4 page table at: {:#?}", level_4_page_table.start_address());
+
 
     // Kernel stack overflow (pushing return address too many times)
     // fn stack_overflow() {

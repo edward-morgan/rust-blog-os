@@ -20,10 +20,10 @@ pub fn init() {
     interrupts::init_idt();
     // initialize() is unsafe
     unsafe { interrupts::PICS.lock().initialize() };
-    x86_64::instructions::interrupts::enable();
+    x86_64::instructions::interrupts::enable(); // Actually enable interrupts
 }
 
-// Continuously execute `hlt`, which makes the CPU sleep
+// Continuously execute `hlt`, which makes the CPU sleep instead of loop (which would peg the CPU)
 pub fn hlt_loop() -> ! {
     loop {
         x86_64::instructions::hlt();
